@@ -18,11 +18,13 @@ tolua下创建实例有2个方法：
 * `tolua.releaseownership(obj)`表示tolua不再管理obj，这时obj不受lua回收影响
 
 一个经典的例子就是异步调用：
+
 ```lua
     local obj = BaseClass:new_local()
     obj:asyncDoSomething(function()
         end)
 ```
+
 上述代码可能在`asyncDoSomething`的过程中，obj被回收了
 
 可以改成这样：
