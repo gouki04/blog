@@ -1,6 +1,6 @@
-username: minixalpha
-baseurl: /StrayBirds
+username: gouki04
+baseurl: /blog
 markdown: redcarpet
 safe: false
 pygments: true
-title: 飞鸟集
+title: 古的博客
