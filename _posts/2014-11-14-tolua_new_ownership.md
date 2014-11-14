@@ -29,20 +29,24 @@ tolua下创建实例有2个方法：
 
 可以改成这样：
 
+```lua
     local obj = BaseClass:new_local()
     obj:asyncDoSomething(function()
             tolua.takeownership(obj)
         end)
 
     tolua.releaseownership(obj)
+```
 
 先把obj的所有权释放掉，等obj真正用完时再调用`takeownership`获取所有权即可。
 
 或者更简单的：
 
+```lua
     local obj = BaseClass:new()
     obj:asyncDoSomething(function()
             tolua.takeownership(obj)
         end)
+```
 
 结束
