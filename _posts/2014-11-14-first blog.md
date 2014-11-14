@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: tolua下的new，new_local与takeownership，releaseownership
 ---
 
