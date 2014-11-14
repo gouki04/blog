@@ -1,6 +1,6 @@
 ---
 layout: default
-title: tolua下的new，new_local与takeownership，releaseownership
+title: tolua++的takeownership与releaseownership
 ---
 
 tolua下创建实例有2个方法：
