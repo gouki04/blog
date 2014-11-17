@@ -20,15 +20,18 @@ title: 解决cannot resume running coroutine问题
 
 反复验证代码，协程确实已经挂起了，但奇怪的是在回调时协程的状态却真的是运行中，导致无法resume。因为在其他情况下都正常，所以分析在等待时间时和等待点击时的区别。发现2者记录回调函数的方式不一样，等待时间时使用的toluafix_ref_function而等待点击时使用的是luaL_ref。
 
-1. toluafix_ref_function
+* toluafix_ref_function
    这方法是cocos2dx里提供的，基本原理是在registry表建立一个toluafix_refid_function_mapping表，来保存所有的注册函数，并把其对应的下标返回作为方法在c层的id。
 
    伪代码：
+
+```lua
    refid = refid + 1 -- func_id一直递增，保证不重复
    registry.toluafix_refid_function_mapping[refid] = func
    return refid
+```
 
-2. luaL_ref
+* luaL_ref
    这个实现是别人从其他库里抄过来的，所以一直没研究。经过研究后，发现原理也非常简单。
    先把func放在栈顶，然后使用luaL_ref将其放入registry表，并将返回的id记录下来作为方法在c层的id。
 
