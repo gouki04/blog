@@ -42,7 +42,7 @@ title: 解决cannot resume running coroutine问题
     return refid
 ```
 
-通过注册时的区别没法发现问题。在网上搜索到有人出现了一样的问题[点这里](http://lua.2524044.n2.nabble.com/Coroutine-trouble-td7640996.html)，是因为记录回调函数时把当时的lua_State保存在一起了，而由于是在协程内记录函数的，所以**记录的`lua_State`是协程的环境**！而在回调时直接用了保存的`lua_State`，从而直接到了协程的环境下去执行了，而这时协程就是运行状态，所以无法resume！
+通过注册时的区别没法发现问题。在网上搜索到有人出现了一样的问题[点这里](http://lua.2524044.n2.nabble.com/Coroutine-trouble-td7640996.html)，是因为记录回调函数时把当时的lua_State保存在一起了，而由于是在协程内记录函数的，所以记录的`lua_State`是协程的环境！而在回调时直接用了保存的`lua_State`，从而直接到了协程的环境下去执行了，而这时协程就是运行状态，所以无法resume！
 
 检查本地的代码，发现和上文里是一模一样的情况，也是因为直接使用了当时保存的`lua_State`，导致回调时使用了协程的环境，导致无法resume。
 
