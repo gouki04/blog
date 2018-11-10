@@ -1,3 +1,8 @@
+---
+layout: default
+title: XLua的obj和userdata的引用分析
+---
+
 # XLua的obj和userdata的引用分析
 
 为了防止c#和lua两端的内存泄漏，有必要了解xlua是怎样处理2端的引用关系的，尤其是在扩展xlua时，处理不得当很容易造成引用丢失或者内存泄漏。
@@ -197,7 +202,7 @@ LUA_API void xlua_pushcsobj(lua_State *L, int key, int meta_ref, int need_cache,
 
 下面来分析下GC过程。
 
-首先看下ud的引用。注意到cacheRef是没有造成引用的，因为它是一张弱表，同时c#层也只记录了ud的key，也没有直接引用ud，所以ud被没有任何的额外引用。也就是说，**一个ud传递给lua后，如果在lua下没有地方引用这个ud了，那么它就会被GC了。这一点非常重要，因为如果需要一个ud的生命周期要跟随obj的生命周期的话，obj就必须要自己对这个ud生成一个引用，否则这个ud就有可以因为在lua下没人引用它而导致被GC**。举个例子就是[Peer机制](2018-11-10-xlua_peer.md)，由于peer是绑在ud上的，如果ud被GC了，其peer也会丢失，这样下次obj被传递到lua时，就会生成一个新的ud，从而丢失了其peer内容。
+首先看下ud的引用。注意到cacheRef是没有造成引用的，因为它是一张弱表，同时c#层也只记录了ud的key，也没有直接引用ud，所以ud被没有任何的额外引用。也就是说，**一个ud传递给lua后，如果在lua下没有地方引用这个ud了，那么它就会被GC了。这一点非常重要，因为如果需要一个ud的生命周期要跟随obj的生命周期的话，obj就必须要自己对这个ud生成一个引用，否则这个ud就有可以因为在lua下没人引用它而导致被GC**。举个例子就是[Peer机制](http://gouki04.github.io/blog/2018/11/10/xlua_peer.html)，由于peer是绑在ud上的，如果ud被GC了，其peer也会丢失，这样下次obj被传递到lua时，就会生成一个新的ud，从而丢失了其peer内容。
 
 ud的GC处理是通过`__gc`这个metamethod实现的（lua5.1也只支持ud的`__gc`，table都不支持），xlua会把所有ud的metatable都设置一个统一的`__gc`函数，即`StaticLuaCallbacks的GcMeta`，看下面的代码：
 
@@ -320,4 +325,4 @@ end
 
 上面提到，如果obj需要保证ud的生命周期，会存储一个ud的引用，那这个引用应该什么时候释放呢？xlua里的LuaBase类也负责了lua引用的管理，它是采用Dispose和析构函数的方式来释放lua引用的。那我们也可以为obj实现Dispose和析构函数来释放引用吗？答案是不行的，这样会造成循环引用。由于obj自身被objects和reverseMap引用着，这个引用必须等到ud被GC才会释放，而ud却又被obj引用了，从而产生循环引用，所以obj根本不可能触发到析构函数，也无法释放ud引用，最后造成内存泄漏。
 
-怎么解决呢？可以通过提供一个统一的Destroy函数来做释放。例如轩辕的BaseObject就有一个Destroy函数，所有BaseObject不用时都需要调用这个函数来做清理工作，调用这个函数后，就可以认为其已经不能再使用了，这样就可以在这个Destroy函数里清理ud的引用。
+怎么解决呢？可以通过在基类中提供一个统一的Destroy函数来做释放，类似Unity的Object.Destroy方法，所有对象在不使用后都需要调用Destroy来做清理操作，那就可以在Destroy里清理ud的引用。
